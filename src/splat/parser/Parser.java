@@ -5,6 +5,7 @@ import java.util.List;
 
 import splat.lexer.Token;
 import splat.parser.elements.*;
+import splat.parser.elements.statementinheritors.Assignment;
 
 public class Parser {
 
@@ -122,7 +123,7 @@ public class Parser {
 	 * 						<loc-var-decls> begin <stmts> end ;
 	 */
 	private FunctionDecl parseFuncDecl() throws ParseException {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub Расписать в посл очередь
 		return null;
 	}
 
@@ -130,7 +131,7 @@ public class Parser {
 	 * <var-decl> ::= <label> : <type> ;
 	 */
 	private VariableDecl parseVarDecl() throws ParseException {
-		var currentToken = tokens.getFirst();
+		var currentToken = tokens.get(0);
 		var type = "";
 		tokens.remove(0);
 		if (peekTwoAhead("Integer")) {
@@ -147,9 +148,9 @@ public class Parser {
 			type = "Long";
 		}
 		while (!peekNext(";")) {
-			tokens.removeFirst();
+			tokens.remove(0);
 		}
-		tokens.removeFirst();
+		tokens.remove(0);
 		return new VariableDecl(currentToken, currentToken.getValue(), type);
 	}
 	
@@ -157,8 +158,23 @@ public class Parser {
 	 * <stmts> ::= (  <stmt>  )*
 	 */
 	private List<Statement> parseStmts() throws ParseException {
-		// TODO Auto-generated method stub
-		return null;
+		var listOfStatements = new ArrayList<Statement>();
+		tokens.remove(0);
+		while (!peekNext("end")) {
+			var currentToken = tokens.get(0);
+			if (peekNext(":=")) {
+				var name = currentToken.getValue();
+				StringBuilder value = new StringBuilder();
+				tokens.remove(0);
+                while (!peekNext(";")) {
+                    value.append(tokens.get(0).getValue());
+                    tokens.remove(0);
+                }
+                listOfStatements.add(new Assignment(currentToken, name, value.toString()));
+			}
+			tokens.remove(0);
+		}
+		return listOfStatements;
 	}
 
 
