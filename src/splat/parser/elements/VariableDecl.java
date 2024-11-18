@@ -4,17 +4,25 @@ import splat.lexer.Token;
 
 public class VariableDecl extends Declaration {
 
-	// Need to add some fields
-	
-	// Need to add extra arguments for setting fields in the constructor 
-	public VariableDecl(Token tok) {
+	private String lable;
+	private String type; //Maybe use Object? private Object variable
+
+	public VariableDecl(Token tok, String label, String type) {
 		super(tok);
+		this.lable = label;
+		this.type = type;
 	}
 
-	// Getters?
-	
+	public String getLable() {
+		return lable;
+	}
+
+	public String getType() {
+		return type;
+	}
+
 	// Fix this as well
 	public String toString() {
-		return null;
+		return "VariableDecl[lable='" + lable + "', type=" + type + ", line=" + super.getLine() + "]";
 	}
 }

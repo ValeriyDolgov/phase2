@@ -130,8 +130,27 @@ public class Parser {
 	 * <var-decl> ::= <label> : <type> ;
 	 */
 	private VariableDecl parseVarDecl() throws ParseException {
-		// TODO Auto-generated method stub
-		return null;
+		var currentToken = tokens.getFirst();
+		var type = "";
+		tokens.remove(0);
+		if (peekTwoAhead("Integer")) {
+			type = "Integer";
+		} else if (peekTwoAhead("String")) {
+			type = "String";
+		} else if (peekTwoAhead("Boolean")) {
+			type = "Boolean";
+		} else if (peekTwoAhead("Double")) {
+			type = "Double";
+		} else if (peekTwoAhead("Float")) {
+			type = "Float";
+		} else if (peekTwoAhead("Long")) {
+			type = "Long";
+		}
+		while (!peekNext(";")) {
+			tokens.removeFirst();
+		}
+		tokens.removeFirst();
+		return new VariableDecl(currentToken, currentToken.getValue(), type);
 	}
 	
 	/*

@@ -2,9 +2,14 @@ package splat.parser.elements;
 
 import splat.lexer.Token;
 
+import java.util.List;
+
 public class FunctionDecl extends Declaration {
 
-	// Need to add some fields
+	private String funcName;
+	private List<VariableDecl> params;
+	private String returnType;
+
 	
 	// Need to add extra arguments for setting fields in the constructor 
 	public FunctionDecl(Token tok) {
