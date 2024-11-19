@@ -5,7 +5,14 @@ import splat.parser.elements.Statement;
 
 public class Print extends Statement {
 
-    public Print(Token tok) {
+    private String printedValue;
+
+    public String getPrintedValue() {
+        return printedValue;
+    }
+
+    public Print(Token tok, String printedValue) {
         super(tok);
+        this.printedValue = printedValue;
     }
 }

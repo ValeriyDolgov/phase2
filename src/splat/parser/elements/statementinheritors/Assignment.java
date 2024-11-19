@@ -10,6 +10,14 @@ public class Assignment extends Statement {
 
     private String value;
 
+    public String getName() {
+        return name;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
     public Assignment(Token tok, String name, String value) {
         super(tok);
         this.name = name;

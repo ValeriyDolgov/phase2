@@ -5,7 +5,8 @@ import java.util.List;
 
 import splat.lexer.Token;
 import splat.parser.elements.*;
-import splat.parser.elements.statementinheritors.Assignment;
+import splat.parser.elements.expressioninheritors.NonVoidFunctionCall;
+import splat.parser.elements.statementinheritors.*;
 
 public class Parser {
 
@@ -123,8 +124,34 @@ public class Parser {
 	 * 						<loc-var-decls> begin <stmts> end ;
 	 */
 	private FunctionDecl parseFuncDecl() throws ParseException {
-		// TODO Auto-generated method stub Расписать в посл очередь
-		return null;
+		var startTok = tokens.get(0);
+		var funcName = startTok.getValue();
+		var listOfVars = new ArrayList<VariableDecl>();
+		if (!peekTwoAhead("(")) {
+			throw new ParseException("Malformed function. Nof found symbol \"(\"", tokens.get(0));
+		}
+		checkNext(funcName);//Remove func name
+		checkNext("(");//Remove (
+		while (!peekNext(")")) {
+			listOfVars.add(parseVarDecl());
+		}
+		checkNext(")");
+		if (!peekNext(":")) {
+			throw new ParseException("Malformed function. Nof found symbol \":\"", tokens.get(0));
+		}
+		checkNext(":"); // Remove :
+		var returnType = tokens.remove(0).getValue();
+		while (!peekNext("begin")) {
+			tokens.remove(0);
+		}
+		checkNext("begin");
+		
+		List<Statement> stmts = parseStmts();
+
+		checkNext("end");
+		checkNext(";");
+		
+		return new FunctionDecl(startTok, funcName, listOfVars, returnType, stmts);
 	}
 
 	/*
@@ -147,10 +174,23 @@ public class Parser {
 		} else if (peekTwoAhead("Long")) {
 			type = "Long";
 		}
+		checkNext(":");
+		if (peekTwoAhead(",")) {
+			while (!peekNext(",")) {
+				tokens.remove(0);
+			}
+			checkNext(",");
+			return new VariableDecl(currentToken, currentToken.getValue(), type);
+		} else if (peekTwoAhead(")")) {
+			while (!peekNext(")")) {
+				tokens.remove(0);
+			}
+			return new VariableDecl(currentToken, currentToken.getValue(), type);
+		}
 		while (!peekNext(";")) {
 			tokens.remove(0);
 		}
-		tokens.remove(0);
+		checkNext(";");
 		return new VariableDecl(currentToken, currentToken.getValue(), type);
 	}
 	
@@ -159,24 +199,99 @@ public class Parser {
 	 */
 	private List<Statement> parseStmts() throws ParseException {
 		var listOfStatements = new ArrayList<Statement>();
-		tokens.remove(0);
 		while (!peekNext("end")) {
 			var currentToken = tokens.get(0);
-			if (peekNext(":=")) {
-				var name = currentToken.getValue();
-				StringBuilder value = new StringBuilder();
-				tokens.remove(0);
-                while (!peekNext(";")) {
-                    value.append(tokens.get(0).getValue());
-                    tokens.remove(0);
-                }
-                listOfStatements.add(new Assignment(currentToken, name, value.toString()));
+			if (peekNext("else")) {
+				break;
 			}
-			tokens.remove(0);
+			if (peekTwoAhead(":=")) {
+				addAssignment(currentToken, listOfStatements);
+			} else if (peekNext("if")) {
+				addIfThenElse(listOfStatements, currentToken);
+			} else if (peekNext("print")) {
+				addPrint(currentToken, listOfStatements);
+			} else if (peekNext("return")) {
+				addPrint(currentToken, listOfStatements);
+			} else if (peekNext("while")) { //TODO Add realisation
+				
+			} else if (peekNext("print_line")) {
+				addPrintLine(currentToken, listOfStatements);
+			} else  {
+				new NonVoidFunctionCall(currentToken); //TODO
+			}
+			checkNext(";");
 		}
 		return listOfStatements;
 	}
 
+	private void addIfThenElse(ArrayList<Statement> listOfStatements, Token currentToken) throws ParseException {
+		StringBuilder ifStatement = new StringBuilder();
+		var thenListOfStatements = new ArrayList<Statement>();
+		var elseListOfStatements = new ArrayList<Statement>();
+		tokens.remove(0);
+		while (!peekNext("then")) {
+			ifStatement.append(tokens.get(0).getValue());
+			tokens.remove(0);
+		}
+		if (peekNext("then")) {
+			checkNext("then");
+			while (!peekNext("end")) {
+				while (!peekNext("else")) {
+					if (peekNext("end")) {
+						break;
+					}
+					thenListOfStatements = (ArrayList<Statement>) parseStmts();
+				}
+				if (peekNext("else")) {
+					checkNext("else");
+					while (!peekNext("end") && !peekTwoAhead("if")) {
+						elseListOfStatements = (ArrayList<Statement>) parseStmts();
+					}
+				}
+			}
+		}
+		checkNext("end");//Remove end
+		checkNext("if");//Remove if
+		listOfStatements.add(new IfThenElse(currentToken, ifStatement.toString(), thenListOfStatements, elseListOfStatements));
+	}
 
+	private void addAssignment(Token currentToken, ArrayList<Statement> listOfStatements) {
+		var name = currentToken.getValue();
+		StringBuilder value = new StringBuilder();
+		tokens.remove(0);
+		if (peekNext(":=")) {
+			tokens.remove(0);
+		}
+		while (!peekNext(";")) {
+			value.append(tokens.get(0).getValue());
+			tokens.remove(0);
+		}
+		listOfStatements.add(new Assignment(currentToken, name, value.toString()));
+	}
+
+	private void addPrint(Token currentToken, ArrayList<Statement> listOfStatements) {
+		tokens.remove(0);
+		StringBuilder printedValue = new StringBuilder();
+		while (!peekNext(";")) {
+			printedValue.append(tokens.get(0).getValue());
+			tokens.remove(0);
+		}
+		listOfStatements.add(new Print(currentToken, printedValue.toString()));
+	}
+
+	private void addReturn(Token currentToken, ArrayList<Statement> listOfStatements) {
+		tokens.remove(0);
+		StringBuilder returnedValue = new StringBuilder();
+		while (!peekNext(";")) {
+			returnedValue.append(tokens.get(0).getValue());
+			tokens.remove(0);
+		}
+		listOfStatements.add(new Return(currentToken, returnedValue.toString()));
+	}
+
+	private void addPrintLine(Token currentToken, ArrayList<Statement> listOfStatements) {
+		tokens.remove(0);
+		listOfStatements.add(new PrintLine(currentToken));
+	}
 
 }

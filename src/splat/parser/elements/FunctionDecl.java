@@ -9,17 +9,63 @@ public class FunctionDecl extends Declaration {
 	private String funcName;
 	private List<VariableDecl> params;
 	private String returnType;
+	private List<Statement> body;
 
-	
-	// Need to add extra arguments for setting fields in the constructor 
-	public FunctionDecl(Token tok) {
+	public FunctionDecl(Token tok, String funcName, List<VariableDecl> params, String returnType, List<Statement> body) {
 		super(tok);
+		this.funcName = funcName;
+		this.params = params;
+		this.returnType = returnType;
+		this.body = body;
 	}
 
-	// Getters?
-	
-	// Fix this as well
+	public List<VariableDecl> getParams() {
+		return params;
+	}
+
+	public String getReturnType() {
+		return returnType;
+	}
+
+	public List<Statement> getBody() {
+		return body;
+	}
+
+	public String getFuncName() {
+		return funcName;
+	}
+
+	@Override
 	public String toString() {
-		return null;
+		var paramsStr = new StringBuilder();
+		if (params != null) {
+			paramsStr.append("(");
+			for (VariableDecl param : params) {
+				paramsStr.append(param.toString());
+				paramsStr.append(",");
+			}
+			paramsStr.append(")");
+		}
+		var bodyStr = new StringBuilder();
+		if (body != null) {
+			bodyStr.append("(");
+			for (Statement statement : body) {
+				bodyStr.append(statement.toString());
+				bodyStr.append(",");
+			}
+			bodyStr.append(")");
+		}
+		return "FunctionDecl{" +
+			   "funcName='" +
+			   funcName +
+			   '\'' +
+			   ", params=" +
+			   paramsStr +
+			   ", returnType='" +
+			   returnType +
+			   '\'' +
+			   ", body=" +
+			   bodyStr +
+			   '}';
 	}
 }
