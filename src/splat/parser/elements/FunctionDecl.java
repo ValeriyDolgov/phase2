@@ -8,14 +8,16 @@ public class FunctionDecl extends Declaration {
 
 	private String funcName;
 	private List<VariableDecl> params;
+	private List<Declaration> localVariables;
 	private String returnType;
 	private List<Statement> body;
 
-	public FunctionDecl(Token tok, String funcName, List<VariableDecl> params, String returnType, List<Statement> body) {
+	public FunctionDecl(Token tok, String funcName, List<VariableDecl> params, List<Declaration> localVariables, String returnType, List<Statement> body) {
 		super(tok);
 		this.funcName = funcName;
 		this.params = params;
-		this.returnType = returnType;
+        this.localVariables = localVariables;
+        this.returnType = returnType;
 		this.body = body;
 	}
 

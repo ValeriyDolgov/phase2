@@ -2,11 +2,11 @@ package splat.parser;
 
 import splat.lexer.Token;
 import splat.parser.elements.*;
+import splat.parser.elements.expressioninheritors.NonVoidFunctionCall;
 import splat.parser.elements.expressioninheritors.Variable;
 import splat.parser.elements.statementinheritors.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Parser {
 
@@ -79,6 +79,16 @@ public class Parser {
             checkNext("end");
             checkNext(";");
 
+
+            if (decls.stream().noneMatch(decl -> decl instanceof VariableDecl)
+                    && stmts.stream().anyMatch(stmt -> stmt instanceof Assignment && (((Assignment) stmt).getValue() instanceof Variable))) {
+                throw new ParseException("No variable declaration found. but needed", startTok);
+            }
+
+            if (decls.stream().noneMatch(decl -> decl instanceof FunctionDecl) &&
+            stmts.stream().anyMatch(statement -> statement instanceof FunctionCall)) {
+                throw new ParseException("No function declaration found. but needed", startTok);
+            }
             return new ProgramAST(decls, stmts, startTok);
 
             // This might happen if we do a tokens.get(), and nothing is there!
@@ -140,9 +150,10 @@ public class Parser {
         }
         checkNext(":"); // Remove :
         var returnType = tokens.remove(0).getValue();
-        while (!peekNext("begin")) {
-            tokens.remove(0);
-        }
+        checkNext("is");
+//        while (!peekNext("begin")) {
+        var localDecls = parseDecls();
+//        }
         checkNext("begin");
 
         List<Statement> stmts = parseStmts();
@@ -150,7 +161,7 @@ public class Parser {
         checkNext("end");
         checkNext(";");
 
-        return new FunctionDecl(startTok, funcName, listOfVars, returnType, stmts);
+        return new FunctionDecl(startTok, funcName, listOfVars, localDecls, returnType, stmts);
     }
 
     /*
@@ -159,6 +170,12 @@ public class Parser {
     private VariableDecl parseVarDecl() throws ParseException {
         var currentToken = tokens.get(0);
         var type = "";
+        Set<String> reservedWords = new HashSet<>(
+                Arrays.asList("program", "begin", "end", "is", "while", "do",
+                        "if", "then", "else", "print", "print_line", "return"));
+        if (reservedWords.contains(currentToken.getValue())) {
+            throw new ParseException("Reserved word '" + currentToken.getValue() + "' found.", currentToken);
+        }
         tokens.remove(0);
         if (peekTwoAhead("Integer")) {
             type = "Integer";
@@ -293,6 +310,9 @@ public class Parser {
                 tokens.remove(0);
             }
             checkNext(")");
+            while (!peekNext(";")) {
+                tokens.remove(0);
+            }
             listOfStatements.add(new Assignment(currentToken, name, new FunctionCall(currentToken, name, listOfVariable)));
         }
         while (!peekNext(";")) {
@@ -337,6 +357,9 @@ public class Parser {
             tokens.remove(0);
         }
         checkNext(")");
-        listOfStatements.add(new Assignment(currentToken, name, new FunctionCall(currentToken, name, listOfVariable)));
+        while (!peekNext(";")) {
+            tokens.remove(0);
+        }
+        listOfStatements.add(new FunctionCall(currentToken, name, listOfVariable));
     }
 }
